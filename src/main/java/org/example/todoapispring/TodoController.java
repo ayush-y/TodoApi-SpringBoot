@@ -10,6 +10,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/todos")
 public class TodoController {
+    private static final Object TODO_NOT_FOUND = "Todo not found";
     private static List<Todo> todoList;
 
     public TodoController() {
@@ -41,16 +42,33 @@ public class TodoController {
            //Home work try to send Jason mas "message todo not found"
            return ResponseEntity.notFound().build();
        }
+//    @DeleteMapping("/{todoId}")
+//    public ResponseEntity<Void> deleteById(@PathVariable int todoId) {
+//        int index = todoList.indexOf(new Todo(todoId, false, null, 0)); // Efficient removal with object comparison
+//
+//        if (index >= 0) {
+//            todoList.remove(index);
+//            return ResponseEntity.noContent().build(); // 204 No Content for successful deletion
+//        } else {
+//            return ResponseEntity.notFound().build(); // 404 Not Found if todo not found
+//        }
+//    }
     @DeleteMapping("/{todoId}")
-    public ResponseEntity<Void> deleteById(@PathVariable int todoId) {
-        int index = todoList.indexOf(new Todo(todoId, false, null, 0)); // Efficient removal with object comparison
-
-        if (index >= 0) {
-            todoList.remove(index);
-            return ResponseEntity.noContent().build(); // 204 No Content for successful deletion
-        } else {
-            return ResponseEntity.notFound().build(); // 404 Not Found if todo not found
+    public ResponseEntity<?> deleteTodoById(@PathVariable Long todoId){
+        Todo todoToRemove = null;
+        for(Todo todo : todoList ){
+            if(todo.getId() == todoId){
+                todoToRemove = todo;
+                break;
+            }
         }
+        if(todoToRemove != null){
+            todoList.remove(todoToRemove);
+            String deleteSuccessMessage = "Todo deleted successfully";
+            return ResponseEntity.status(HttpStatus.OK).body(deleteSuccessMessage);
+        }else
+            return  ResponseEntity.status(HttpStatus.NOT_FOUND).body(TODO_NOT_FOUND);
+
     }
 
 
