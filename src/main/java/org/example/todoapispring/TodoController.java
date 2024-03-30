@@ -1,5 +1,7 @@
 package org.example.todoapispring;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -7,19 +9,29 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
+
 @RestController
 @RequestMapping("/api/v1/todos")
 public class TodoController {
+
     private static final Object TODO_NOT_FOUND = "Todo not found";
     private static List<Todo> todoList;
 
-    public TodoController() {
+    private TodoService todoService;
+    private TodoService todoService2;
+
+    public TodoController(@Qualifier("FakeTodoService") TodoService todoService,
+                          @Qualifier("AnotherFakeTodoService") TodoService todoService2) {
+        this.todoService = todoService;
+        this.todoService2 = todoService2;
         todoList = new ArrayList<>();
         todoList.add(new Todo(1, false, "Todo 1", 1));
         todoList.add(new Todo(2, true, "Todo 2", 2));
+        //this.todoService = new TodoServices(); handled todoServices object independently
     }
     @GetMapping()
-    public  ResponseEntity<List<Todo>> getTodo(){
+    public  ResponseEntity<List<Todo>> getTodo(@RequestParam(required = false) Boolean isCompleted){
+        System.out.println("Incoming query Param "+isCompleted+" "+ this.todoService2.doSomething());
         return ResponseEntity.status(HttpStatus.OK).body(todoList);
     }
 
@@ -69,6 +81,29 @@ public class TodoController {
         }else
             return  ResponseEntity.status(HttpStatus.NOT_FOUND).body(TODO_NOT_FOUND);
 
+    }
+
+    @PatchMapping("/{todoId}")
+    ResponseEntity<?> updateTodoById(@PathVariable Long todoId,
+                                     @RequestParam(required = false) String title,
+                                     @RequestParam(required = false) Boolean isCompleted,
+                                     Integer userId) {
+        for(Todo todo : todoList) {
+            if (todo.getId() == todoId) {
+                if (title != null) {
+                    todo.setTitle(title);
+                }
+
+                if (isCompleted != null) {
+                    todo.setCompleted(isCompleted);
+                }
+                if (userId != null) {
+                    todo.setUserId(userId);
+                }
+                return ResponseEntity.status(HttpStatus.OK).body(todo);
+            }
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(TODO_NOT_FOUND);
     }
 
 
